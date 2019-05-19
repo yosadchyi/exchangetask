@@ -80,4 +80,24 @@ public class ExchangeTest {
         assertThrows(RequestRejectedException.class, () -> exchange.cancel(2));
         assertDoesNotThrow(() -> exchange.cancel(1));
     }
+
+    @Test
+    public void highestBuyPriceShouldBeReturned() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, true, 10, 100);
+        exchange.send(2, true, 5, 100);
+        exchange.send(3, true, 15, 100);
+        assertEquals(15, exchange.getHighestBuyPrice());
+    }
+
+    @Test
+    public void lowestSellPriceShouldBeReturned() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, false, 10, 100);
+        exchange.send(2, false, 5, 100);
+        exchange.send(3, false, 15, 100);
+        assertEquals(5, exchange.getLowestSellPrice());
+    }
 }
