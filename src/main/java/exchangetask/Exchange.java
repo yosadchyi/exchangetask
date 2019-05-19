@@ -95,6 +95,9 @@ public class Exchange implements ExchangeInterface, QueryInterface {
 
     @Override
     public int getTotalSizeAtPrice(final int price) throws RequestRejectedException {
+        if (price <= 0) {
+            throw new RequestRejectedException("Invalid price.");
+        }
         return getTotalSizeAtPriceInList(price, buyOrders) + getTotalSizeAtPriceInList(price, sellOrders);
     }
 
