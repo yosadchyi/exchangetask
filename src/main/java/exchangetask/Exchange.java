@@ -1,18 +1,22 @@
 package exchangetask;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Exchange implements ExchangeInterface, QueryInterface {
+    private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
-    private final List<Order> buyOrders = new ArrayList<>();
-    private final List<Order> sellOrders = new ArrayList<>();
+    private static final Comparator<Order> ORDER_COMPARATOR = Comparator.comparing(Order::getPrice)
+            .thenComparing(Order::getSequence);
+    private final Collection<Order> buyOrders = new TreeSet<>(ORDER_COMPARATOR.reversed());
+    private final Collection<Order> sellOrders = new TreeSet<>(ORDER_COMPARATOR);
 
     @Override
     public void send(final long orderId,
@@ -29,7 +33,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             throw new RequestRejectedException("Order has zero size!");
         }
 
-        final Order order = new Order(orderId, isBuy, price, size);
+        final Order order = new Order(lastSequence++, orderId, isBuy, price, size);
 
         if (order.isBuy()) {
             processOrder(order, sellOrders, (sellOrder) -> sellOrder.getPrice() <= order.getPrice());
@@ -38,7 +42,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         }
     }
 
-    private void processOrder(final Order order, final List<Order> orders, final Predicate<Order> filterPredicate) {
+    private void processOrder(final Order order, final Collection<Order> orders, final Predicate<Order> filterPredicate) {
         final List<Order> executedOrders = orders.stream()
                 .filter(filterPredicate)
                 .peek(other -> doExchange(order, other))
@@ -87,7 +91,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             throw new RequestRejectedException(String.format("Order with id %d does not exists!", orderId));
         }
 
-        final List<Order> orders = order.isBuy() ? buyOrders : sellOrders;
+        final Collection<Order> orders = order.isBuy() ? buyOrders : sellOrders;
 
         orderById.remove(orderId);
         orders.remove(order);
@@ -101,7 +105,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         return getTotalSizeAtPriceInList(price, buyOrders) + getTotalSizeAtPriceInList(price, sellOrders);
     }
 
-    private Integer getTotalSizeAtPriceInList(final int price, final List<Order> orders) {
+    private Integer getTotalSizeAtPriceInList(final int price, final Collection<Order> orders) {
         return orders.stream()
                 .filter(o -> o.getPrice() == price)
                 .map(Order::getSize)

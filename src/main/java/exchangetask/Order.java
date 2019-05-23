@@ -3,16 +3,22 @@ package exchangetask;
 import java.util.Objects;
 
 public class Order {
+    private final long sequence;
     private final long id;
     private final boolean buy;
     private final int price;
     private int size;
 
-    public Order(final long id, final boolean buy, final int price, final int size) {
+    public Order(final long sequence, final long id, final boolean buy, final int price, final int size) {
+        this.sequence = sequence;
         this.id = id;
         this.buy = buy;
         this.price = price;
         this.size = size;
+    }
+
+    public long getSequence() {
+        return sequence;
     }
 
     public long getId() {
