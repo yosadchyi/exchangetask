@@ -13,10 +13,11 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
-    private static final Comparator<Order> ORDER_COMPARATOR = Comparator.comparing(Order::getPrice)
-            .thenComparing(Order::getSequence);
-    private final Collection<Order> buyOrders = new TreeSet<>(ORDER_COMPARATOR.reversed());
-    private final Collection<Order> sellOrders = new TreeSet<>(ORDER_COMPARATOR);
+    private final Collection<Order> buyOrders = new TreeSet<>(Comparator.comparing(Order::getPrice)
+            .reversed()
+            .thenComparing(Order::getSequence));
+    private final Collection<Order> sellOrders = new TreeSet<>(Comparator.comparing(Order::getPrice)
+            .thenComparing(Order::getSequence));
 
     @Override
     public void send(final long orderId,
