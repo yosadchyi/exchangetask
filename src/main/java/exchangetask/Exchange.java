@@ -24,7 +24,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
                      final boolean isBuy,
                      final int price,
                      final int size) throws RequestRejectedException {
-        if (orderById.containsKey(orderId)) {
+        if (orderById.containsKey(orderId) || executedOrdersById.containsKey(orderId)) {
             throw new RequestRejectedException(String.format("Order with id %d already exists!", orderId));
         }
         if (price == 0) {
@@ -116,8 +116,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
 
     @Override
     public int getHighestBuyPrice() throws RequestRejectedException {
-        return buyOrders.stream()
-                .max(Comparator.comparing(Order::getPrice))
+        return buyOrders.stream().findFirst()
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No BUY orders present!"));
     }
@@ -125,7 +124,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     @Override
     public int getLowestSellPrice() throws RequestRejectedException {
         return sellOrders.stream()
-                .min(Comparator.comparing(Order::getPrice))
+                .findFirst()
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No SELL orders present!"));
     }
