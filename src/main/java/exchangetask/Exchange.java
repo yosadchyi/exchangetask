@@ -24,21 +24,24 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             "zero or lower size!");
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
-    private final Map<Long, Order> executedOrdersById = new HashMap<>();
+    private final Set<Long> executedOrderIds = new HashSet<>();
     private final Set<Long> cancelledOrderIds = new HashSet<>();
-    private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
+    private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparingInt(Order::getPrice)
             .reversed()
-            .thenComparing(Order::getSequence));
-    private final PriorityQueue<Order> sellOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
-            .thenComparing(Order::getSequence));
+            .thenComparingLong(Order::getSequence));
+    private final PriorityQueue<Order> sellOrders = new PriorityQueue<>(Comparator.comparingInt(Order::getPrice)
+            .thenComparingLong(Order::getSequence));
 
     @Override
     public void send(final long orderId,
                      final boolean isBuy,
                      final int price,
                      final int size) throws RequestRejectedException {
-        if (orderById.containsKey(orderId) || executedOrdersById.containsKey(orderId)) {
+        if (orderById.containsKey(orderId)) {
             throw ORDER_ALREADY_EXISTS;
+        }
+        if (executedOrderIds.contains(orderId)) {
+            throw ORDER_ALREADY_EXECUTED;
         }
         if (price <= 0) {
             throw ORDER_HAS_INVALID_PRICE;
@@ -50,13 +53,15 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         final Order order = new Order(lastSequence++, orderId, isBuy, price, size);
 
         if (order.isBuy()) {
-            processOrder(order, sellOrders, (sellOrder) -> sellOrder.getPrice() <= order.getPrice());
+            processOrder(order, sellOrders, sellOrder -> sellOrder.getPrice() <= order.getPrice());
         } else {
-            processOrder(order, buyOrders, (buyOrder) -> order.getPrice() <= buyOrder.getPrice());
+            processOrder(order, buyOrders, buyOrder -> order.getPrice() <= buyOrder.getPrice());
         }
     }
 
-    private void processOrder(final Order order, final PriorityQueue<Order> orders, final Predicate<Order> filterPredicate) {
+    private void processOrder(final Order order,
+                              final PriorityQueue<Order> orders,
+                              final Predicate<Order> filterPredicate) {
         while (!orders.isEmpty() && order.getSize() > 0) {
             final Order other = orders.peek();
 
@@ -99,22 +104,12 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     }
 
     private void markOrderExecuted(final Order other) {
-        executedOrdersById.put(other.getId(), other);
-    }
-
-    public boolean canCancelOrder(final long orderId) {
-        if (executedOrdersById.containsKey(orderId)) {
-            return false;
-        }
-        if (cancelledOrderIds.contains(orderId)) {
-            return false;
-        }
-        return true;
+        executedOrderIds.add(other.getId());
     }
 
     @Override
     public void cancel(final long orderId) throws RequestRejectedException {
-        if (executedOrdersById.containsKey(orderId)) {
+        if (executedOrderIds.contains(orderId)) {
             throw ORDER_ALREADY_EXECUTED;
         }
         if (cancelledOrderIds.contains(orderId)) {
@@ -126,7 +121,6 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             throw ORDER_DOES_NOT_EXISTS;
         }
 
-        orderById.remove(orderId);
         cancelledOrderIds.add(order.getId());
     }
 
@@ -142,7 +136,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         return getTotalSizeAtPriceInList(price, buyOrders) + getTotalSizeAtPriceInList(price, sellOrders);
     }
 
-    private Integer getTotalSizeAtPriceInList(final int price, final Collection<Order> orders) {
+    private Integer getTotalSizeAtPriceInList(final int price, final PriorityQueue<Order> orders) {
         return orders.stream()
                 .filter(this::isNotCancelledOrder)
                 .filter(o -> o.getPrice() == price)

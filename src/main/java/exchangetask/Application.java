@@ -12,12 +12,13 @@ public class Application {
         int numPlacedOrders = 0;
 
         for (int i = 0; i < nOperations; i++) {
-            final int price = random.nextInt(99990) + 10;
-            final int size = random.nextInt(99990) + 10;
+            final int price = random.nextInt(9990) + 10;
+            final int size = random.nextInt(9990) + 10;
             final double probabilityToSend = Math.exp(-numPlacedOrders * Math.log(2) / 2e4);
             final double sendRoll = random.nextDouble();
             final boolean cancelOrder = probabilityToSend < sendRoll;
             final long orderToCancel = cancelOrder ? random.nextInt(numPlacedOrders) : -1;
+            final boolean buy = random.nextBoolean();
 
             final long startTime = System.nanoTime();
             if (cancelOrder) {
@@ -26,14 +27,14 @@ public class Application {
                 } catch (RequestRejectedException ex) {
                 }
             } else {
-                exchange.send(orderId++, random.nextBoolean(), price, size);
+                exchange.send(orderId++, buy, price, size);
                 numPlacedOrders++;
             }
             final long endTime = System.nanoTime();
             totalTimeElapsed += endTime - startTime;
 
             if (i > 0 && i % 1000000 == 0) {
-                printStats(totalTimeElapsed, i + 1);
+                printStats(totalTimeElapsed, i);
             }
         }
         printStats(totalTimeElapsed, nOperations);
