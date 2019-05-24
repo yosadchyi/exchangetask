@@ -8,6 +8,7 @@ public class Order {
     private final boolean buy;
     private final int price;
     private int size;
+    private boolean cancelled;
 
     public Order(final long sequence, final long id, final boolean buy, final int price, final int size) {
         this.sequence = sequence;
@@ -15,6 +16,18 @@ public class Order {
         this.buy = buy;
         this.price = price;
         this.size = size;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    public boolean isNotCancelled() {
+        return !cancelled;
+    }
+
+    public void setCancelled(final boolean cancelled) {
+        this.cancelled = cancelled;
     }
 
     public long getSequence() {
