@@ -8,23 +8,25 @@ public class Application {
         int orderId = 0;
         final Random random = new Random();
         final Exchange exchange = new Exchange();
-        final long startTime = System.nanoTime();
+        long totalTimeElapsed = 0;
 
         for (int i = 0; i < nOperations; i++) {
-            exchange.send(orderId++, random.nextBoolean(),
-                    random.nextInt(9990) + 10,
-                    random.nextInt(9990) + 10);
+            final int price = random.nextInt(9990) + 10;
+            final int size = random.nextInt(9990) + 10;
+
+            final long startTime = System.nanoTime();
+            exchange.send(orderId++, random.nextBoolean(), price, size);
+            final long endTime = System.nanoTime();
+            totalTimeElapsed += endTime - startTime;
+
             if (i > 0 && i % 1000000 == 0) {
-                printStats(startTime, i);
+                printStats(totalTimeElapsed, i + 1);
             }
         }
-        printStats(startTime, nOperations);
+        printStats(totalTimeElapsed, nOperations);
     }
 
-    private static void printStats(final long startTime, final int i) {
-        final long endTime = System.nanoTime();
-        final long timeElapsed = endTime - startTime;
-
+    private static void printStats(final long timeElapsed, final int i) {
         System.out.printf("ops: %d, time: %dns, %dns per action%n", i, timeElapsed, timeElapsed / i);
     }
 }
