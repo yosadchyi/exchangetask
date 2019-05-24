@@ -12,16 +12,16 @@ public class Application {
         int numPlacedOrders = 0;
 
         for (int i = 0; i < nOperations; i++) {
-            final int price = random.nextInt(9990) + 10;
-            final int size = random.nextInt(9990) + 10;
+            final int price = random.nextInt(99990) + 10;
+            final int size = random.nextInt(99990) + 10;
             final double probabilityToSend = Math.exp(-numPlacedOrders * Math.log(2) / 2e4);
             final double sendRoll = random.nextDouble();
+            final boolean cancelOrder = probabilityToSend < sendRoll;
+            final long orderToCancel = cancelOrder ? random.nextInt(numPlacedOrders) : -1;
 
             final long startTime = System.nanoTime();
-            if (probabilityToSend < sendRoll) {
+            if (cancelOrder) {
                 try {
-                    final long orderToCancel = random.nextInt(numPlacedOrders);
-
                     if (exchange.canCancelOrder(orderToCancel)) {
                         exchange.cancel(orderToCancel);
                     }
