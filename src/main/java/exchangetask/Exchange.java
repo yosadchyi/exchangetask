@@ -32,9 +32,6 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         if (orderById.containsKey(orderId)) {
             throw ORDER_ALREADY_EXISTS;
         }
-        if (price <= 0) {
-            throw ORDER_HAS_INVALID_PRICE;
-        }
         if (size <= 0) {
             throw ORDER_HAS_INVALID_SIZE;
         }
