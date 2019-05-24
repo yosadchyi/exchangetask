@@ -12,8 +12,6 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             "not exists!");
     private static final RequestRejectedException ORDER_ALREADY_EXISTS = new RequestRejectedException("Order already " +
             "exists!");
-    private static final RequestRejectedException ORDER_HAS_INVALID_PRICE = new RequestRejectedException("Order has " +
-            "zero or lower price!");
     private static final RequestRejectedException ORDER_HAS_INVALID_SIZE = new RequestRejectedException("Order has " +
             "zero or lower size!");
     private long lastSequence = 1;
