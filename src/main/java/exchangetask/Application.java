@@ -23,7 +23,8 @@ public class Application {
 
     private static void printStats(final long startTime, final int i) {
         final long endTime = System.nanoTime();
+        final long timeElapsed = endTime - startTime;
 
-        System.out.printf("ops: %d, time: %dns%n", i, endTime - startTime);
+        System.out.printf("ops: %d, time: %dns, %dns per action%n", i, timeElapsed, timeElapsed / i);
     }
 }
