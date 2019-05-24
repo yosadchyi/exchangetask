@@ -1,11 +1,12 @@
 package exchangetask;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
-import java.util.TreeSet;
+import java.util.PriorityQueue;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -13,10 +14,10 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
-    private final Collection<Order> buyOrders = new TreeSet<>(Comparator.comparing(Order::getPrice)
+    private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
             .reversed()
             .thenComparing(Order::getSequence));
-    private final Collection<Order> sellOrders = new TreeSet<>(Comparator.comparing(Order::getPrice)
+    private final PriorityQueue<Order> sellOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
             .thenComparing(Order::getSequence));
 
     @Override
@@ -43,15 +44,21 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         }
     }
 
-    private void processOrder(final Order order, final Collection<Order> orders, final Predicate<Order> filterPredicate) {
-        final List<Order> executedOrders = orders.stream()
-                .filter(filterPredicate)
-                .peek(other -> doExchange(order, other))
-                .filter(Order::isEmpty)
-                .peek(this::markOrderExecuted)
-                .collect(Collectors.toList());
+    private void processOrder(final Order order, final PriorityQueue<Order> orders, final Predicate<Order> filterPredicate) {
+        while (!orders.isEmpty() && order.getSize() > 0) {
+            final Order other = orders.peek();
 
-        orders.removeAll(executedOrders);
+            if (!filterPredicate.test(other)) {
+                break;
+            }
+
+            doExchange(order, other);
+
+            if (other.isEmpty()) {
+                markOrderExecuted(other);
+                orders.remove(other);
+            }
+        }
 
         if (order.isEmpty()) {
             markOrderExecuted(order);
