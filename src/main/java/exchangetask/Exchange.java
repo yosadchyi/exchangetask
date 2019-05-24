@@ -1,19 +1,19 @@
 package exchangetask;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class Exchange implements ExchangeInterface, QueryInterface {
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
+    private final Set<Order> cancelledOrders = new HashSet<>();
     private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
             .reversed()
             .thenComparing(Order::getSequence));
@@ -48,6 +48,10 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         while (!orders.isEmpty() && order.getSize() > 0) {
             final Order other = orders.peek();
 
+            if (isCancelledOrder(other)) {
+                orders.remove();
+                continue;
+            }
             if (!filterPredicate.test(other)) {
                 break;
             }
@@ -97,10 +101,8 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             throw new RequestRejectedException(String.format("Order with id %d does not exists!", orderId));
         }
 
-        final Collection<Order> orders = getOrdersForOrder(order);
-
         orderById.remove(orderId);
-        orders.remove(order);
+        cancelledOrders.add(order);
     }
 
     private Collection<Order> getOrdersForOrder(final Order order) {
@@ -117,6 +119,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
 
     private Integer getTotalSizeAtPriceInList(final int price, final Collection<Order> orders) {
         return orders.stream()
+                .filter(this::isNotCancelledOrder)
                 .filter(o -> o.getPrice() == price)
                 .mapToInt(Order::getSize)
                 .reduce(Integer::sum)
@@ -126,6 +129,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     @Override
     public int getHighestBuyPrice() throws RequestRejectedException {
         return buyOrders.stream()
+                .filter(this::isNotCancelledOrder)
                 .findFirst()
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No BUY orders present!"));
@@ -134,8 +138,17 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     @Override
     public int getLowestSellPrice() throws RequestRejectedException {
         return sellOrders.stream()
+                .filter(this::isNotCancelledOrder)
                 .findFirst()
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No SELL orders present!"));
+    }
+
+    private boolean isCancelledOrder(final Order order) {
+        return cancelledOrders.contains(order);
+    }
+
+    private boolean isNotCancelledOrder(final Order order) {
+        return !isCancelledOrder(order);
     }
 }

@@ -122,4 +122,26 @@ public class ExchangeTest {
         exchange.send(4, false, 100, 4);
         assertEquals(110, exchange.getHighestBuyPrice());
     }
+
+    @Test
+    public void cancelledBuyOrdersShouldBeRemovedAndSkipped() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, true, 110, 3);
+        exchange.send(2, true, 112, 6);
+        exchange.cancel(1);
+        exchange.send(4, false, 100, 4);
+        assertEquals(112, exchange.getHighestBuyPrice());
+    }
+
+    @Test
+    public void cancelledSellOrdersShouldBeRemovedAndSkipped() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, false, 100, 5);
+        exchange.send(2, false, 90, 6);
+        exchange.cancel(2);
+        exchange.send(4, true, 100, 4);
+        assertEquals(100, exchange.getLowestSellPrice());
+    }
 }
