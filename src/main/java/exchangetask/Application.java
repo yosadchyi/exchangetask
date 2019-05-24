@@ -9,13 +9,28 @@ public class Application {
         final Random random = new Random();
         final Exchange exchange = new Exchange();
         long totalTimeElapsed = 0;
+        int numPlacedOrders = 0;
 
         for (int i = 0; i < nOperations; i++) {
             final int price = random.nextInt(9990) + 10;
             final int size = random.nextInt(9990) + 10;
+            final double probabilityToSend = Math.exp(-numPlacedOrders * Math.log(2) / 2e4);
+            final double sendRoll = random.nextDouble();
 
             final long startTime = System.nanoTime();
-            exchange.send(orderId++, random.nextBoolean(), price, size);
+            if (probabilityToSend < sendRoll) {
+                try {
+                    final long orderToCancel = random.nextInt(numPlacedOrders);
+
+                    if (exchange.canCancelOrder(orderToCancel)) {
+                        exchange.cancel(orderToCancel);
+                    }
+                } catch (RequestRejectedException ex) {
+                }
+            } else {
+                exchange.send(orderId++, random.nextBoolean(), price, size);
+                numPlacedOrders++;
+            }
             final long endTime = System.nanoTime();
             totalTimeElapsed += endTime - startTime;
 

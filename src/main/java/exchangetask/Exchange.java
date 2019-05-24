@@ -13,7 +13,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
-    private final Set<Order> cancelledOrders = new HashSet<>();
+    private final Set<Long> cancelledOrderIds = new HashSet<>();
     private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice)
             .reversed()
             .thenComparing(Order::getSequence));
@@ -90,6 +90,16 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         executedOrdersById.put(other.getId(), other);
     }
 
+    public boolean canCancelOrder(final long orderId) {
+        if (executedOrdersById.containsKey(orderId)) {
+            return false;
+        }
+        if (cancelledOrderIds.contains(orderId)) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void cancel(final long orderId) throws RequestRejectedException {
         if (executedOrdersById.containsKey(orderId)) {
@@ -102,7 +112,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         }
 
         orderById.remove(orderId);
-        cancelledOrders.add(order);
+        cancelledOrderIds.add(order.getId());
     }
 
     private Collection<Order> getOrdersForOrder(final Order order) {
@@ -145,7 +155,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     }
 
     private boolean isCancelledOrder(final Order order) {
-        return cancelledOrders.contains(order);
+        return cancelledOrderIds.contains(order.getId());
     }
 
     private boolean isNotCancelledOrder(final Order order) {
