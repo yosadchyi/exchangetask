@@ -109,14 +109,15 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     private Integer getTotalSizeAtPriceInList(final int price, final Collection<Order> orders) {
         return orders.stream()
                 .filter(o -> o.getPrice() == price)
-                .map(Order::getSize)
+                .mapToInt(Order::getSize)
                 .reduce(Integer::sum)
                 .orElse(0);
     }
 
     @Override
     public int getHighestBuyPrice() throws RequestRejectedException {
-        return buyOrders.stream().findFirst()
+        return buyOrders.stream()
+                .findFirst()
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No BUY orders present!"));
     }
