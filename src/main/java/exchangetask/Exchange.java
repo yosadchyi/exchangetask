@@ -10,6 +10,18 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class Exchange implements ExchangeInterface, QueryInterface {
+    private static final RequestRejectedException ORDER_ALREADY_EXECUTED = new RequestRejectedException("Order is " +
+            "already executed!");
+    private static final RequestRejectedException ORDER_ALREADY_CANCELLED = new RequestRejectedException("Order is " +
+            "already cancelled!");
+    private static final RequestRejectedException ORDER_DOES_NOT_EXISTS = new RequestRejectedException("Order does " +
+            "not exists!");
+    private static final RequestRejectedException ORDER_ALREADY_EXISTS = new RequestRejectedException("Order already " +
+            "exists!");
+    private static final RequestRejectedException ORDER_HAS_INVALID_PRICE = new RequestRejectedException("Order has " +
+            "zero or lower price!");
+    private static final RequestRejectedException ORDER_HAS_INVALID_SIZE = new RequestRejectedException("Order has " +
+            "zero or lower size!");
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final Map<Long, Order> executedOrdersById = new HashMap<>();
@@ -26,13 +38,13 @@ public class Exchange implements ExchangeInterface, QueryInterface {
                      final int price,
                      final int size) throws RequestRejectedException {
         if (orderById.containsKey(orderId) || executedOrdersById.containsKey(orderId)) {
-            throw new RequestRejectedException(String.format("Order with id %d already exists!", orderId));
+            throw ORDER_ALREADY_EXISTS;
         }
         if (price <= 0) {
-            throw new RequestRejectedException("Order has zero or lower price!");
+            throw ORDER_HAS_INVALID_PRICE;
         }
         if (size <= 0) {
-            throw new RequestRejectedException("Order has zero or lower size!");
+            throw ORDER_HAS_INVALID_SIZE;
         }
 
         final Order order = new Order(lastSequence++, orderId, isBuy, price, size);
@@ -103,15 +115,15 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     @Override
     public void cancel(final long orderId) throws RequestRejectedException {
         if (executedOrdersById.containsKey(orderId)) {
-            throw new RequestRejectedException(String.format("Order with id %d is already executed!", orderId));
+            throw ORDER_ALREADY_EXECUTED;
         }
         if (cancelledOrderIds.contains(orderId)) {
-            throw new RequestRejectedException(String.format("Order with id %d is already cancelled!", orderId));
+            throw ORDER_ALREADY_CANCELLED;
         }
         final Order order = orderById.remove(orderId);
 
         if (order == null) {
-            throw new RequestRejectedException(String.format("Order with id %d does not exists!", orderId));
+            throw ORDER_DOES_NOT_EXISTS;
         }
 
         orderById.remove(orderId);

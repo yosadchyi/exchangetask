@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Application {
     public static void main(final String... args) throws RequestRejectedException {
-        final int nOperations = 10000000;
+        final int nOperations = 100000000;
         int orderId = 0;
         final Random random = new Random();
         final Exchange exchange = new Exchange();
@@ -22,9 +22,7 @@ public class Application {
             final long startTime = System.nanoTime();
             if (cancelOrder) {
                 try {
-                    if (exchange.canCancelOrder(orderToCancel)) {
-                        exchange.cancel(orderToCancel);
-                    }
+                    exchange.cancel(orderToCancel);
                 } catch (RequestRejectedException ex) {
                 }
             } else {
