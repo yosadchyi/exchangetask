@@ -105,6 +105,9 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         if (executedOrdersById.containsKey(orderId)) {
             throw new RequestRejectedException(String.format("Order with id %d is already executed!", orderId));
         }
+        if (cancelledOrderIds.contains(orderId)) {
+            throw new RequestRejectedException(String.format("Order with id %d is already cancelled!", orderId));
+        }
         final Order order = orderById.remove(orderId);
 
         if (order == null) {
