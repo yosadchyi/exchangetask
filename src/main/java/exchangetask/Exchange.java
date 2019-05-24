@@ -56,7 +56,7 @@ public class Exchange implements ExchangeInterface, QueryInterface {
 
             if (other.isEmpty()) {
                 markOrderExecuted(other);
-                orders.remove(other);
+                orders.remove();
             }
         }
 
