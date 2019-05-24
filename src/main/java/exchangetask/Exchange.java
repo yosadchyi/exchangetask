@@ -69,11 +69,9 @@ public class Exchange implements ExchangeInterface, QueryInterface {
     }
 
     private void addOrder(final Order order) {
-        if (order.isBuy()) {
-            buyOrders.add(order);
-        } else {
-            sellOrders.add(order);
-        }
+        final Collection<Order> orders = getOrdersForOrder(order);
+
+        orders.add(order);
         orderById.put(order.getId(), order);
     }
 
@@ -92,10 +90,14 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             throw new RequestRejectedException(String.format("Order with id %d does not exists!", orderId));
         }
 
-        final Collection<Order> orders = order.isBuy() ? buyOrders : sellOrders;
+        final Collection<Order> orders = getOrdersForOrder(order);
 
         orderById.remove(orderId);
         orders.remove(order);
+    }
+
+    private Collection<Order> getOrdersForOrder(final Order order) {
+        return order.isBuy() ? buyOrders : sellOrders;
     }
 
     @Override
