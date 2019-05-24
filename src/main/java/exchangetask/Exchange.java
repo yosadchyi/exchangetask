@@ -27,11 +27,11 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         if (orderById.containsKey(orderId) || executedOrdersById.containsKey(orderId)) {
             throw new RequestRejectedException(String.format("Order with id %d already exists!", orderId));
         }
-        if (price == 0) {
-            throw new RequestRejectedException("Order has zero price!");
+        if (price <= 0) {
+            throw new RequestRejectedException("Order has zero or lower price!");
         }
-        if (size == 0) {
-            throw new RequestRejectedException("Order has zero size!");
+        if (size <= 0) {
+            throw new RequestRejectedException("Order has zero or lower size!");
         }
 
         final Order order = new Order(lastSequence++, orderId, isBuy, price, size);
