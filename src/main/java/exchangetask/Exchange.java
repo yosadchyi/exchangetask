@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.function.Predicate;
 
@@ -118,19 +119,32 @@ public class Exchange implements ExchangeInterface, QueryInterface {
 
     @Override
     public int getHighestBuyPrice() throws RequestRejectedException {
-        return buyOrders.stream()
-                .filter(Order::isNotCancelled)
-                .findFirst()
+        cleanupQueueHead(buyOrders);
+        return queueHead(buyOrders)
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No BUY orders present!"));
     }
 
     @Override
     public int getLowestSellPrice() throws RequestRejectedException {
-        return sellOrders.stream()
-                .filter(Order::isNotCancelled)
-                .findFirst()
+        cleanupQueueHead(sellOrders);
+        return queueHead(sellOrders)
                 .map(Order::getPrice)
                 .orElseThrow(() -> new RequestRejectedException("No SELL orders present!"));
+    }
+
+    private static  <T> Optional<T> queueHead(PriorityQueue<T> queue) {
+        return Optional.ofNullable(queue.peek());
+    }
+
+    private static void cleanupQueueHead(final PriorityQueue<Order> orders) {
+        while (!orders.isEmpty()) {
+            final Order order = orders.peek();
+
+            if (!order.isCancelled()) {
+                break;
+            }
+            orders.remove();
+        }
     }
 }
