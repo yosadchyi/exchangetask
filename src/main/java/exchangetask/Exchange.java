@@ -11,12 +11,14 @@ import java.util.PriorityQueue;
 import java.util.function.Predicate;
 
 public class Exchange implements ExchangeInterface, QueryInterface {
-    private static final RequestRejectedException ORDER_DOES_NOT_EXISTS = new RequestRejectedException("Order does " +
-            "not exists!");
-    private static final RequestRejectedException ORDER_ALREADY_EXISTS = new RequestRejectedException("Order already " +
-            "exists!");
-    private static final RequestRejectedException ORDER_HAS_INVALID_SIZE = new RequestRejectedException("Order has " +
-            "zero or lower size!");
+    private static final RequestRejectedException ORDER_DOES_NOT_EXISTS = new RequestRejectedException(
+            "Order does not exists!");
+    private static final RequestRejectedException ORDER_ALREADY_EXISTS = new RequestRejectedException(
+            "Order already exists!");
+    private static final RequestRejectedException ORDER_HAS_INVALID_SIZE = new RequestRejectedException(
+            "Order has zero or lower size!");
+    private static final RequestRejectedException ORDER_ALREADY_CANCELLED = new RequestRejectedException(
+            "Order is already cancelled!");
     private long lastSequence = 1;
     private final Map<Long, Order> orderById = new HashMap<>();
     private final PriorityQueue<Order> buyOrders = new PriorityQueue<>(Comparator.comparingInt(Order::getPrice)
@@ -94,6 +96,9 @@ public class Exchange implements ExchangeInterface, QueryInterface {
         if (order == null) {
             throw ORDER_DOES_NOT_EXISTS;
         }
+        if (order.isCancelled()) {
+            throw ORDER_ALREADY_CANCELLED;
+        }
 
         order.setCancelled(true);
     }
@@ -148,13 +153,6 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             }
             orders.remove();
         }
-    }
-
-    public void dump() {
-        System.out.println("Buy orders");
-        System.out.println(getBuyOrders());
-        System.out.println("Sell orders");
-        System.out.println(getSellOrders());
     }
 
     public List<Order> getBuyOrders() {

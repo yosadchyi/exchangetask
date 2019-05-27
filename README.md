@@ -1,7 +1,7 @@
 # Simple Exchange implementation
 
-Current implementation is single-threaded and is very simplistic. It uses heavily Java Streams API
-to implement operations.
+This is order exchange simulation. 
+Current implementation is single-threaded and uses internally PriorityQueue (which is based on heap data structure).
 
 ## How to use
 
