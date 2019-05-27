@@ -124,6 +124,34 @@ public class ExchangeTest {
     }
 
     @Test
+    public void buyOrderOrderingShouldBeFifoAndStartFromHighestPrice() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, true, 110, 3);
+        exchange.send(2, true, 112, 2);
+        exchange.send(3, true, 112, 2);
+        exchange.send(4, true, 109, 1);
+
+        final long[] expectedOrdering = new long[] {2, 3, 1, 4};
+        final long[] actualOrdering = exchange.getBuyOrders().stream().mapToLong(Order::getId).toArray();
+        assertArrayEquals(expectedOrdering, actualOrdering);
+    }
+
+    @Test
+    public void sellOrderOrderingShouldBeFifoAndStartFromLowestPrice() throws RequestRejectedException {
+        final Exchange exchange = new Exchange();
+
+        exchange.send(1, false, 110, 3);
+        exchange.send(2, false, 112, 2);
+        exchange.send(3, false, 112, 2);
+        exchange.send(4, false, 109, 1);
+
+        final long[] expectedOrdering = new long[] {4, 1, 2, 3};
+        final long[] actualOrdering = exchange.getSellOrders().stream().mapToLong(Order::getId).toArray();
+        assertArrayEquals(expectedOrdering, actualOrdering);
+    }
+
+    @Test
     public void cancelledBuyOrdersShouldBeRemovedAndSkipped() throws RequestRejectedException {
         final Exchange exchange = new Exchange();
 

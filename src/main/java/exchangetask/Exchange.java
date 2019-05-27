@@ -1,8 +1,10 @@
 package exchangetask;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -146,5 +148,32 @@ public class Exchange implements ExchangeInterface, QueryInterface {
             }
             orders.remove();
         }
+    }
+
+    public void dump() {
+        System.out.println("Buy orders");
+        System.out.println(getBuyOrders());
+        System.out.println("Sell orders");
+        System.out.println(getSellOrders());
+    }
+
+    public List<Order> getBuyOrders() {
+        return queueToList(buyOrders);
+    }
+
+    public List<Order> getSellOrders() {
+        return queueToList(sellOrders);
+    }
+
+    private static <T> List<T> queueToList(final PriorityQueue<T> queue) {
+        final PriorityQueue<T> tmpQueue = new PriorityQueue<>(queue.comparator());
+        final List<T> result = new ArrayList<>(tmpQueue.size());
+
+        tmpQueue.addAll(queue);
+        while (!tmpQueue.isEmpty()) {
+            result.add(tmpQueue.remove());
+        }
+
+        return result;
     }
 }
